@@ -258,10 +258,24 @@ _ovs_vsctl_complete_target () {
     fi
 }
 
+_ovs_vsctl_get_PS1 () {
+    local res
+
+#    res=">"
+
+    # Original inspiration from
+    # http://stackoverflow.com/questions/10060500/bash-how-to-evaluate-ps1-ps2,
+    # but changed quite a lot to allow making sure that PS1s only set
+    # for the current session work
+    res="$(bash -i 2>&1 <<< $'PS1=\"'"$PS1"$'\" \n' | head -n 4 | tail -n 1)"
+    printf "${res}"
+}
+
 _ovs_vsctl_complete_new () {
     local two_word_type message result
+
     two_word_type="${2/-/ }"
-    message="\nEnter a ${two_word_type,,}:\n$PS1$COMP_LINE"
+    message="\nEnter a ${two_word_type,,}:\n$(_ovs_vsctl_get_PS1) $COMP_LINE"
     if [ -n "$1" ]; then
         result="$1"
     else
