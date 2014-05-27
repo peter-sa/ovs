@@ -28,6 +28,7 @@ declare -A _OVS_VSCTL_PARSED_ARGS
 
 _ovs_vsctl_bashcomp_globalopt () {
     local result
+
     result=$(printf "%s\n" "${_OVS_VSCTL_OPTIONS}" \
              | grep -o -- "^$1[^=]*=\?")
     printf -- "${result}"
@@ -35,6 +36,7 @@ _ovs_vsctl_bashcomp_globalopt () {
 
 _ovs_vsctl_bashcomp_localopt () {
     local result possible_opts
+
     possible_opts=$(printf "%s\n" "${_OVS_VSCTL_COMMANDS}" | cut -f1 -d',')
     # This finds all options that could go together with the
     # already-seen ones
@@ -58,6 +60,7 @@ _ovs_vsctl_bashcomp_localopt () {
 
 _ovs_vsctl_bashcomp_command () {
     local result possible_cmds
+
     possible_cmds=$(printf "%s\n" "${_OVS_VSCTL_COMMANDS}")
     for prefix_arg in $1; do
         possible_cmds=$(printf "%s\n" "$possible_cmds" \
@@ -71,6 +74,7 @@ _ovs_vsctl_bashcomp_command () {
 
 detect_nonzero_completions () {
     local tmp newarg
+
     newarg=${1#*EO}
     readarray tmp <<< "$newarg"
     if [ "${#tmp[@]}" -eq 1 ] && [ "${#newarg}" -eq 0 ]; then
@@ -90,12 +94,14 @@ _ovs_vsctl_expand_command () {
 
 _ovs_vsctl_complete_table () {
     local result
+
     result=$(ovsdb-client --no-heading list-tables | grep -- "^$1")
     printf -- "EO\n%s\n" "${result}"
 }
 
 _ovs_vsctl_complete_record () {
     local table uuids names
+
     table="${_OVS_VSCTL_PARSED_ARGS[TABLE]}"
     # Tables should always have an _uuid column
     uuids=$(ovs-vsctl --no-heading -f table --columns=_uuid list $table \
@@ -111,12 +117,14 @@ _ovs_vsctl_complete_record () {
 
 _ovs_vsctl_complete_bridge () {
     local result
+
     result=$(ovs-vsctl list-br | grep -- "^$1")
     printf -- "EO\n%s\n" "${result}"
 }
 
 _ovs_vsctl_complete_port () {
     local result
+
     if [ -n "${_OVS_VSCTL_PARSED_ARGS[BRIDGE]}" ]; then
         result=$(ovs-vsctl list-ports ${_OVS_VSCTL_PARSED_ARGS["BRIDGE"]})
     else
@@ -135,6 +143,8 @@ _ovs_vsctl_complete_port () {
 # $3:  Column to find keys in
 # $4:  Prefix for each completion
 _ovs_vsctl_complete_key_given_table_column () {
+    local keys
+
     keys=$(ovs-vsctl --no-heading --columns="$3" list \
                      ${_OVS_VSCTL_PARSED_ARGS["TABLE"]} \
            | tr -d '{\"}' | tr -s ', ' '\n' | cut -d'=' -f1 \
@@ -149,6 +159,7 @@ _ovs_vsctl_complete_key () {
     # in remove, where it is a table key.  This checks to see if table
     # is set (the remove scenario), and then decides what to do.
     local result
+
     if [ -n "${_OVS_VSCTL_PARSED_ARGS[TABLE]}" ]; then
         local column=$(tr -d '\n' <<< ${_OVS_VSCTL_PARSED_ARGS["COLUMN"]})
         keys=$(ovs-vsctl --no-heading --columns="$column" list \
@@ -170,7 +181,9 @@ _ovs_vsctl_complete_key () {
 }
 
 _ovs_vsctl_complete_column () {
-    local columns=$(ovsdb-client --no-headings list-columns ${_OVS_VSCTL_PARSED_ARGS["TABLE"]})
+    local columns result
+
+    columns=$(ovsdb-client --no-headings list-columns ${_OVS_VSCTL_PARSED_ARGS["TABLE"]})
     result=$(printf "%s\n" "${columns}" \
              | cut -d' ' -f1 \
              | grep -- "$1" | sort | uniq)
@@ -178,7 +191,9 @@ _ovs_vsctl_complete_column () {
 }
 
 _ovs_vsctl_complete_iface () {
-    local result=$(ifconfig -a -s | cut -f1 -d' ' | tail -n +2 | grep -- "^$1")
+    local result
+
+    result=$(ifconfig -a -s | cut -f1 -d' ' | tail -n +2 | grep -- "^$1")
     printf -- "EO\n%s\n" "${result}"
 }
 
@@ -223,6 +238,7 @@ _ovs_vsctl_complete_column_optkey_value () {
 
 _ovs_vsctl_complete_filename () {
     local result
+
     result=$(compgen -o filenames -A file "$1")
     printf -- "EO\n%s\n" "${result}"
 }
@@ -233,6 +249,7 @@ _ovs_vsctl_complete_bridge_fail_mode () {
 
 _ovs_vsctl_complete_target () {
     local result
+
     if [[ "$1" =~ ^p?u ]]; then
         local protocol pathname expansion_base result
         protocol=$(cut -d':' -f1 <<< "$1")
@@ -313,6 +330,7 @@ declare -A _OVS_VSCTL_ARG_COMPLETION_FUNCS=(
 # there it will fail gracefully.
 _ovs_vsctl_possible_completions_of_argument () {
     local possible_types completions tmp
+
     possible_types=$(printf "%s\n" "$1" | tr '|' '\n')
     for type in $possible_types; do
         if [ ${_OVS_VSCTL_ARG_COMPLETION_FUNCS["${type^^}"]} ]; then
@@ -332,6 +350,7 @@ _ovs_vsctl_possible_completions_of_argument () {
 # matches, so it doesn't know what comes next.
 _ovs_vsctl_complete_argument() {
     local cmd_args arg expansion index
+
     new=$(printf "%s\n" "$1" | grep -- '.\+')
     readarray -t cmd_args <<< "$new";
     arg=${cmd_args[$2]}
@@ -392,6 +411,7 @@ _ovs_vsctl_detect_nospace () {
 
 _ovs_vsctl_process_messages () {
     local message
+
     message="${1#*BM}"
     message="${message%%EM*}"
     printf "${message}"
@@ -421,6 +441,7 @@ _ovs_vsctl_process_messages () {
 # it has determined that the next argument will be.
 _ovs_vsctl_bashcomp () {
     local cur valid_globals cmd_args raw_cmd cmd_pos valid_globals valid_opts
+
     _OVS_VSCTL_PARSED_ARGS=()
     cmd_pos=-1
     cur=${COMP_WORDS[COMP_CWORD]}

@@ -784,6 +784,7 @@ print_command_arguments(const struct vsctl_command_syntax *command)
         char current = arguments[length-i];
         struct oew_stack_element *elem;
         int oew;
+
         switch(current) {
         case ']':
             elem = malloc(sizeof(struct oew_stack_element));
@@ -845,6 +846,7 @@ print_commands(void)
         char *options = xstrdup(p->options);
         char *options_begin = options;
         char *item;
+
         for (item = strsep(&options, ",");
              item != NULL;
              item = strsep(&options, ",")) {
