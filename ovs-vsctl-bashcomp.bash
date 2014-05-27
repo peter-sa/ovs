@@ -53,8 +53,6 @@ _ovs_vsctl_bashcomp_localopt () {
     done
     result=$(printf "%s\n" "${result}" \
              | sed -ne 's/\[\('"$2"'[^]]*\)\]/\1/p')
-#             | awk 'match($0, /\[('"$2"'[^\]]*)\]/, groups) \
-#                    { print groups[1] }')
     printf -- "${result}"
 }
 
@@ -225,10 +223,6 @@ _ovs_vsctl_complete_column_optkey_value () {
                  | grep -- "$1" | sort | uniq)
     fi
     if [[ $1 =~ ":" ]]; then
-        # keys=$(ovs-vsctl --no-heading --columns=${column} list $table \
-        #        | tr -d '{\"}' | tr -s ', ' '\n' | cut -d'=' -f1 \
-        #        | xargs printf "${column}:%s\n" | grep -- "$1" )
-        # result="${keys}"
         result=$(_ovs_vsctl_complete_key_given_table_column \
                      "$key" "$table" "$column" "$column:")
 
@@ -270,10 +264,8 @@ _ovs_vsctl_complete_new () {
     message="\nEnter a ${two_word_type,,}:\n$PS1$COMP_LINE"
     if [ -n "$1" ]; then
         result="$1"
-#        printf -- "NOCOMP\nEO\n%s\n" "$1"
     else
         result="x"
-#        printf -- "NOCOMP\nEO\nx\n"
     fi
     printf -- "NOCOMP\nBM%sEM\nEO\n%s\n" "${message}" "${result}"
 }
