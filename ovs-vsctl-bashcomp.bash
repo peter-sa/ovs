@@ -110,7 +110,7 @@ _ovs_vsctl_complete_record () {
                       --columns=name list $table \
                       2>/dev/null \
             | grep -- "$1")
-    printf -- "EO\n%s\n%s\n" "${uuids}" ${names}
+    printf -- "EO\n%s\n%s\n" "${uuids}" "${names}"
 }
 
 _ovs_vsctl_complete_bridge () {
