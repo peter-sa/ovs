@@ -751,13 +751,6 @@ Other options:\n\
 static void
 print_command_arguments(const struct vsctl_command_syntax *command)
 {
-    const char *arguments = command->arguments;
-    int length = strlen(arguments);
-    char *simple_args = calloc(2 * length, sizeof(char));
-    /* One char has already been written: \0 */
-    int i, chars_written = 1;
-
-    int in_repeated = 0;
     /*
      * A whole_word_optional value is needed to decide whether or not
      * a ! or + should be added on encountering a space: if the
@@ -774,8 +767,16 @@ print_command_arguments(const struct vsctl_command_syntax *command)
         int optional_ends_word;
         struct list node;
     };
+
+    const char *arguments = command->arguments;
     struct list oew_stack;
+    int length = strlen(arguments);
+    char *simple_args = calloc(2 * length, sizeof(char));
+    /* One char has already been written: \0 */
+    int chars_written = 1;
+    int in_repeated = 0;
     int whole_word_optional = 0;
+    int i;
 
     list_init(&oew_stack);
 
@@ -840,7 +841,7 @@ print_command_arguments(const struct vsctl_command_syntax *command)
 static void
 print_commands(void)
 {
-  const struct vsctl_command_syntax *p;
+    const struct vsctl_command_syntax *p;
 
     for (p = get_all_commands(); p->name; p++) {
         char *options = xstrdup(p->options);
