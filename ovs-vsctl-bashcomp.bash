@@ -144,7 +144,7 @@ _ovs_vsctl_complete_key_given_table_column () {
     local keys
 
     keys=$(ovs-vsctl --no-heading --columns="$3" list \
-                     ${_OVS_VSCTL_PARSED_ARGS["TABLE"]} \
+                     "$2" \
            | tr -d '{\"}' | tr -s ', ' '\n' | cut -d'=' -f1 \
            | xargs printf "$4%s\n" | grep -- "$1" )
     result="${keys}"
