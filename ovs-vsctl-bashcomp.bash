@@ -10,7 +10,8 @@ IFS="
 # arguments = ((!argument|?argument|*argument|+argument) )*
 # argument = ([^ ]*|argument\|argument)
 #
-# The [] characters in local options are just delimiters.  The argument prefixes mean:
+# The [] characters in local options are just delimiters.  The
+# argument prefixes mean:
 #   !argument :: The argument is required
 #   ?argument :: The argument is optional
 #   *argument :: The argument may appear any number (0 or more) times
@@ -176,7 +177,8 @@ _ovs_vsctl_complete_key () {
 _ovs_vsctl_complete_column () {
     local columns result
 
-    columns=$(ovsdb-client --no-headings list-columns ${_OVS_VSCTL_PARSED_ARGS["TABLE"]})
+    columns=$(ovsdb-client --no-headings list-columns \
+                           ${_OVS_VSCTL_PARSED_ARGS["TABLE"]})
     result=$(printf "%s\n" "${columns}" \
              | cut -d' ' -f1 \
              | grep -- "$1" | sort | uniq)
@@ -335,7 +337,8 @@ _ovs_vsctl_possible_completions_of_argument () {
     possible_types=$(printf "%s\n" "$1" | tr '|' '\n')
     for type in $possible_types; do
         if [ ${_OVS_VSCTL_ARG_COMPLETION_FUNCS["${type^^}"]} ]; then
-            tmp=$(${_OVS_VSCTL_ARG_COMPLETION_FUNCS["${type^^}"]} "$2" "${type^^}")
+            tmp=$(${_OVS_VSCTL_ARG_COMPLETION_FUNCS["${type^^}"]} \
+                      "$2" "${type^^}")
             completions=$(printf "%s\n%s" "${completions}" "${tmp}")
         fi
     done
@@ -397,7 +400,8 @@ _ovs_vsctl_complete_argument() {
             fi
             tmp2_noEO="${tmp2#*EO}"
             tmp2_EO="${tmp2%%EO*}"
-            expansion=$(printf "%s%s\n%s" "${tmp2_EO}" "${tmp1}" "${tmp2_noEO}")
+            expansion=$(printf "%s%s\n%s" "${tmp2_EO}" \
+                               "${tmp1}" "${tmp2_noEO}")
             ;;
     esac
     printf "%s\n" "$expansion"
