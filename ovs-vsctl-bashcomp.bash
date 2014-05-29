@@ -160,11 +160,6 @@ _ovs_vsctl_complete_key () {
 
     if [ -n "${_OVS_VSCTL_PARSED_ARGS[TABLE]}" ]; then
         local column=$(tr -d '\n' <<< ${_OVS_VSCTL_PARSED_ARGS["COLUMN"]})
-        keys=$(ovs-vsctl --no-heading --columns="$column" list \
-                         ${_OVS_VSCTL_PARSED_ARGS["TABLE"]} \
-               | tr -d '{\"}' | tr -s ', ' '\n' | cut -d'=' -f1 \
-               | xargs printf "%s\n" | grep -- "$1" )
-        result="${keys}"
         result=$(_ovs_vsctl_complete_key_given_table_column \
                      $1 \
                      ${_OVS_VSCTL_PARSED_ARGS["TABLE"]} \
