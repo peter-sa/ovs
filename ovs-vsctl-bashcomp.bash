@@ -86,7 +86,7 @@ _ovs_vsctl_expand_command () {
     result=$(printf "%s\n" "${_OVS_VSCTL_COMMANDS}" \
              | grep -- ",$1," | cut -f3 -d',' | tr ' ' '\n' \
              | awk '/\+.*/ { name=substr($0,2);
-                             print "!"name; print "*"name; }
+                             print "!"name; print "*"name; next; }
                     1')
     printf -- "${result}\n!--"
 }
