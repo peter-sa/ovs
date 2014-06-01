@@ -71,7 +71,7 @@ _ovs_vsctl_bashcomp_command () {
     printf -- "${result}"
 }
 
-detect_nonzero_completions () {
+_ovs_vsctl_detect_nonzero_completions () {
     local tmp newarg
 
     newarg=${1#*EO}
@@ -376,28 +376,28 @@ _ovs_vsctl_complete_argument() {
             tmp1=$(_ovs_vsctl_possible_completions_of_argument "${arg:1}" $3)
             tmp2=$(_ovs_vsctl_complete_argument "$1" "$(($2+1))" "$3")
             arg2_index=$?
-            if detect_nonzero_completions "$tmp1" \
-               && detect_nonzero_completions "$tmp2"; then
+            if _ovs_vsctl_detect_nonzero_completions "$tmp1" \
+               && _ovs_vsctl_detect_nonzero_completions "$tmp2"; then
                 if [ "${arg:0:1}" = "*" ]; then
                     index=$2;
                 else
                     index=$(($2+1));
                 fi
             fi
-            if detect_nonzero_completions "$tmp1" \
-               && (! detect_nonzero_completions "$tmp2"); then
+            if _ovs_vsctl_detect_nonzero_completions "$tmp1" \
+               && (! _ovs_vsctl_detect_nonzero_completions "$tmp2"); then
                 if [ "${arg:0:1}" = "*" ]; then
                     index=$2;
                 else
                     index=$(($2+1));
                 fi
             fi
-            if (! detect_nonzero_completions "$tmp1") \
-               && detect_nonzero_completions "$tmp2"; then
+            if (! _ovs_vsctl_detect_nonzero_completions "$tmp1") \
+               && _ovs_vsctl_detect_nonzero_completions "$tmp2"; then
                 index=$arg2_index
             fi
-            if (! detect_nonzero_completions "$tmp1") \
-               && (! detect_nonzero_completions "$tmp2"); then
+            if (! _ovs_vsctl_detect_nonzero_completions "$tmp1") \
+               && (! _ovs_vsctl_detect_nonzero_completions "$tmp2"); then
                 index=254
             fi
             # Don't allow secondary completions to inhibit primary
@@ -505,7 +505,7 @@ _ovs_vsctl_bashcomp () {
             _ovs_vsctl_detect_nospace $tmp
             completion="${completion} ${tmp#*EO}"
             if [ $index -lt $COMP_CWORD ] \
-               && detect_nonzero_completions "$tmp"; then
+               && _ovs_vsctl_detect_nonzero_completions "$tmp"; then
                 valid_globals=false
                 given_opts="${given_opts} ${word}"
             fi
@@ -515,7 +515,7 @@ _ovs_vsctl_bashcomp () {
             _ovs_vsctl_detect_nospace $tmp
             completion="${completion} ${tmp#*EO}"
             if [ $index -lt $COMP_CWORD ] \
-               && detect_nonzero_completions "$tmp"; then
+               && _ovs_vsctl_detect_nonzero_completions "$tmp"; then
                 valid_globals=false
                 valid_opts=false
                 valid_commands=false
