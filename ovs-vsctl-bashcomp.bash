@@ -346,12 +346,17 @@ declare -A _OVS_VSCTL_ARG_COMPLETION_FUNCS=(
 _ovs_vsctl_possible_completions_of_argument () {
     local possible_types completions tmp
 
+    completions="EO"
+
     possible_types=$(printf "%s\n" "$1" | tr '|' '\n')
     for type in $possible_types; do
         if [ ${_OVS_VSCTL_ARG_COMPLETION_FUNCS["${type^^}"]} ]; then
             tmp=$(${_OVS_VSCTL_ARG_COMPLETION_FUNCS["${type^^}"]} \
                       "$2" "${type^^}")
-            completions=$(printf "%s\n%s" "${completions}" "${tmp}")
+            tmp_noEO="${tmp#*EO}"
+            tmp_EO="${tmp%%EO*}"
+            completions=$(printf "%s%s\n%s" "${tmp_EO}" \
+                                 "${completions}" "${tmp_noEO}")
         fi
     done
     printf "%s\n" "${completions}"
