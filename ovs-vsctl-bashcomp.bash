@@ -190,11 +190,36 @@ _ovs_vsctl_complete_column () {
     printf -- "EO\n%s\n" "${result}"
 }
 
-_ovs_vsctl_complete_iface () {
+_ovs_vsctl_get_sys_intf () {
+    local result
+    case "$(uname -o)" in
+        *Linux*)
+            result=$(ip -o link 2>/dev/null | cut -d':' -f2 \
+                     | sed -e 's/^ \(.*\)/\1/')
+            ;;
+        *)
+            result=$(ifconfig -a -s 2>/dev/null | cut -f1 -d' ' | tail -n +2)
+            ;;
+    esac
+    printf "%s\n" "${result}"
+}
+
+_ovs_vsctl_complete_sysiface () {
     local result
 
-    result=$(ifconfig -a -s | cut -f1 -d' ' | tail -n +2 | grep -- "^$1")
+    result=$(_ovs_vsctl_get_sys_intf | grep -- "^$1")
     printf -- "EO\n%s\n" "${result}"
+}
+
+_ovs_vsctl_complete_iface () {
+    local bridges result
+    bridges=$(ovs-vsctl list-br)
+    for bridge in $bridges; do
+        local ifaces
+        ifaces=$(ovs-vsctl list-ifaces "${bridge}")
+        result="${result} ${ifaces}"
+    done
+    printf "EO%s\n" "${result}"
 }
 
 _ovs_vsctl_complete_column_optkey_value () {
@@ -212,7 +237,8 @@ _ovs_vsctl_complete_column_optkey_value () {
     # encountered and, if it has, using that type without the NEW- as
     # the table.
     if [ -z "$table" ]; then
-        if [ -n ${_OVS_VSCTL_PARSED_ARGS["NEW-PORT"]} ]; then
+        if [ -n ${_OVS_VSCTL_PARSED_ARGS["NEW-PORT"]} ] \
+           || [ -n ${_OVS_VSCTL_PARSED_ARGS["NEW-BOND-PORT"]} ]; then
             table="Port"
         fi
     fi
@@ -321,6 +347,7 @@ declare -A _OVS_VSCTL_ARG_COMPLETION_FUNCS=(
     ["PORT"]=_ovs_vsctl_complete_port
     ["KEY"]=_ovs_vsctl_complete_key
     ["IFACE"]=_ovs_vsctl_complete_iface
+    ["SYSIFACE"]=_ovs_vsctl_complete_sysiface
     ["COLUMN"]=_ovs_vsctl_complete_column
     ["COLUMN?:KEY"]=_ovs_vsctl_complete_column_optkey_value
     ["COLUMN?:KEY=VALUE"]=_ovs_vsctl_complete_column_optkey_value
@@ -332,7 +359,8 @@ declare -A _OVS_VSCTL_ARG_COMPLETION_FUNCS=(
     ["MODE"]=_ovs_vsctl_complete_bridge_fail_mode
     ["TARGET"]=_ovs_vsctl_complete_target
     ["NEW-BRIDGE"]=_ovs_vsctl_complete_new
-    ["NEW-PORT"]=_ovs_vsctl_complete_new
+    ["NEW-PORT"]=_ovs_vsctl_complete_sysiface
+    ["NEW-BOND-PORT"]=_ovs_vsctl_complete_new
     ["NEW-VLAN"]=_ovs_vsctl_complete_new
     ["--"]=_ovs_vsctl_complete_dashdash
 )
@@ -498,7 +526,7 @@ _ovs_vsctl_bashcomp () {
                 fi
             fi
             if [[ $cmd_pos -lt ${#cmd_args} ]]; then
-                _OVS_VSCTL_PARSED_ARGS[${cmd_args[$cmd_pos]:1}]=$word
+                _OVS_VSCTL_PARSED_ARGS["${cmd_args[$cmd_pos]:1}"]=$word
             fi
             if [ $possible_newindex -lt 254 ]; then
                 cmd_pos=$possible_newindex

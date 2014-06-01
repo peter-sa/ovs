@@ -4420,7 +4420,7 @@ static const struct vsctl_command_syntax all_commands[] = {
     {"add-port", 2, INT_MAX, "BRIDGE NEW-PORT [COLUMN[:KEY]=VALUE]...",
      pre_get_info, cmd_add_port, NULL, "--may-exist", RW},
     {"add-bond", 4, INT_MAX,
-     "BRIDGE NEW-PORT IFACE... [COLUMN[:KEY]=VALUE]...", pre_get_info,
+     "BRIDGE NEW-BOND-PORT SYSIFACE... [COLUMN[:KEY]=VALUE]...", pre_get_info,
      cmd_add_bond, NULL, "--may-exist,--fake-iface", RW},
     {"del-port", 1, 2, "[BRIDGE] PORT|IFACE", pre_get_info, cmd_del_port, NULL,
      "--if-exists,--with-iface", RW},
