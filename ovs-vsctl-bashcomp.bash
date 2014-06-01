@@ -28,11 +28,15 @@ IFS=$SAVE_IFS
 declare -A _OVS_VSCTL_PARSED_ARGS
 
 _ovs_vsctl_bashcomp_globalopt () {
-    local result
+    local options result
 
+    options=""
     result=$(printf "%s\n" "${_OVS_VSCTL_OPTIONS}" \
-             | grep -o -- "^$1[^=]*=\?")
-    printf -- "${result}"
+             | grep -o -- "^${1%=*}[^=]*=\?")
+    if [[ $result =~ "=" ]]; then
+        options="NOSPACE"
+    fi
+    printf -- "${options}EO${result}"
 }
 
 _ovs_vsctl_bashcomp_localopt () {
