@@ -301,6 +301,13 @@ _ovs_vsctl_complete_dashdash () {
 # Note that the NEW-* functions actually are ``completed''; currently
 # the completions are just used to save the fact that they have
 # appeared for later use (i.e. implicit table calculation).
+#
+# The output is of the form <options>EO<completions>, where EO stands
+# for end options.  Currently available options are:
+#  - NOSPACE: Do not add a space at the end of each completion
+#  - NOCOMP: Do not complete, but store the output of the completion
+#    func in _OVS_VSCTL_PARSED_ARGS for later usage.
+#  - BM<message>EM: Print the <message>
 declare -A _OVS_VSCTL_ARG_COMPLETION_FUNCS=(
     ["TABLE"]=_ovs_vsctl_complete_table
     ["RECORD"]=_ovs_vsctl_complete_record
