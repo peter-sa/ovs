@@ -126,18 +126,19 @@ _ovs_vsctl_complete_bridge () {
 }
 
 _ovs_vsctl_complete_port () {
-    local result
+    local ports result
 
     if [ -n "${_OVS_VSCTL_PARSED_ARGS[BRIDGE]}" ]; then
-        result=$(ovs-vsctl list-ports ${_OVS_VSCTL_PARSED_ARGS["BRIDGE"]})
+        ports=$(ovs-vsctl list-ports "${_OVS_VSCTL_PARSED_ARGS[BRIDGE]}")
     else
         local all_ports
         all_ports=$(ovs-vsctl --format=table \
                               --no-headings \
                               --columns=name \
                               list Port)
-        result=$(printf "$all_ports" | sort | tr -d '" ' | uniq -u)
+        ports=$(printf "$all_ports" | sort | tr -d '" ' | uniq -u)
     fi
+    result=$(grep -- "^$1" <<< "$ports")
     printf -- "EO\n%s\n" "${result}"
 }
 
