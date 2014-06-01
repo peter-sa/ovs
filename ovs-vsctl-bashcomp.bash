@@ -40,7 +40,7 @@ _ovs_vsctl_bashcomp_globalopt () {
 }
 
 _ovs_vsctl_bashcomp_localopt () {
-    local result possible_opts
+    local options result possible_opts
 
     possible_opts=$(printf "%s\n" "${_OVS_VSCTL_COMMANDS}" | cut -f1 -d',')
     # This finds all options that could go together with the
@@ -58,7 +58,10 @@ _ovs_vsctl_bashcomp_localopt () {
     done
     result=$(printf "%s\n" "${result}" \
              | sed -ne 's/\[\('"$2"'[^]]*\)\]/\1/p')
-    printf -- "${result}"
+    if [[ $result =~ "=" ]]; then
+        options="NOSPACE"
+    fi
+    printf -- "${options}EO${result}"
 }
 
 _ovs_vsctl_bashcomp_command () {
