@@ -492,7 +492,7 @@ _ovs_vsctl_bashcomp () {
                 fi
             fi
             if [[ $cmd_pos -lt ${#cmd_args} ]]; then
-                _OVS_VSCTL_PARSED_ARGS[${cmd_args[$cmd_pos]:1}]=$tmp_nospace
+                _OVS_VSCTL_PARSED_ARGS[${cmd_args[$cmd_pos]:1}]=$word
             fi
             if [ $possible_newindex -lt 254 ]; then
                 cmd_pos=$possible_newindex
