@@ -157,7 +157,7 @@ _ovs_vsctl_complete_key_given_table_column () {
            | tr -d '{\"}' | tr -s ', ' '\n' | cut -d'=' -f1 \
            | xargs printf "$4%s\n" | grep -- "$1" )
     result="${keys}"
-    printf -- "EO\n%s\n" "${result}"
+    printf -- "%s\n" "${result}"
 }
 
 _ovs_vsctl_complete_key () {
@@ -170,7 +170,7 @@ _ovs_vsctl_complete_key () {
     if [ -n "${_OVS_VSCTL_PARSED_ARGS[TABLE]}" ]; then
         local column=$(tr -d '\n' <<< ${_OVS_VSCTL_PARSED_ARGS["COLUMN"]})
         result=$(_ovs_vsctl_complete_key_given_table_column \
-                     $1 \
+                     "$1" \
                      ${_OVS_VSCTL_PARSED_ARGS["TABLE"]} \
                      $column \
                      "")
@@ -180,6 +180,15 @@ _ovs_vsctl_complete_key () {
                  | cut -d'=' -f1 | grep -- "^$1")
     fi
     printf -- "EO\n%s\n" "${result}"
+}
+
+_ovs_vsctl_complete_key_value () {
+    local orig_completions new_completions
+    orig_completions=$(_ovs_vsctl_complete_key "$1")
+    for completion in ${orig_completions#*EO}; do
+        new_completions="${new_completions} ${completion}="
+    done
+    printf -- "NOSPACE\nEO\n%s" "${new_completions}"
 }
 
 _ovs_vsctl_complete_column () {
@@ -354,8 +363,8 @@ declare -A _OVS_VSCTL_ARG_COMPLETION_FUNCS=(
     ["COLUMN"]=_ovs_vsctl_complete_column
     ["COLUMN?:KEY"]=_ovs_vsctl_complete_column_optkey_value
     ["COLUMN?:KEY=VALUE"]=_ovs_vsctl_complete_column_optkey_value
-    ["KEY=VALUE"]=_ovs_vsctl_complete_key
-    ["?KEY=VALUE"]=_ovs_vsctl_complete_key
+    ["KEY=VALUE"]=_ovs_vsctl_complete_key_value
+    ["?KEY=VALUE"]=_ovs_vsctl_complete_key_value
     ["PRIVATE-KEY"]=_ovs_vsctl_complete_filename
     ["CERTIFICATE"]=_ovs_vsctl_complete_filename
     ["CA-CERT"]=_ovs_vsctl_complete_filename
