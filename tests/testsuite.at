@@ -157,3 +157,6 @@ m4_include([tests/interface-reconfigure.at])
 m4_include([tests/stp.at])
 m4_include([tests/vlog.at])
 m4_include([tests/vtep-ctl.at])
+
+m4_include([tests/bashcomp.at])
+m4_include([tests/bashcomp-ovs-vsctl.at])

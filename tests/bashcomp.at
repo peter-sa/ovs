@@ -1,0 +1,73 @@
+dnl This file contains generic macros for testing bash completion
+dnl
+dnl OVS bash completion is implemented with bash functions mapped to
+dnl appropriate commands using the bash "complete -F" command.
+dnl
+dnl The specified completion function is called with these arguments:
+dnl
+dnl   <cmd-name>
+dnl   <word-to-complete>
+dnl   <word-before-word-to-complete>
+dnl
+dnl with the environment containing:
+dnl
+dnl   COMP_LINE: The current command line
+dnl   COMP_POINT: Index of current cursor relative to beginning of
+dnl      current command.
+dnl   COMP_KEY: key used to invoke current completion
+dnl   COMP_TYPE: Type of completion triggering function
+dnl      TAB = normal completion
+dnl      ? = listing completions after several tabs
+dnl      ! = listing alternatives on partial word completion
+dnl      @ = list copmletions if word is not unmodified
+dnl      % = menu completion
+dnl   COMP_WORDS: Array of individual words in current command line
+dnl   COMP_CWORD: index into COMP_CWORD containing current word
+dnl
+dnl It should return possible completions in the array environment
+dnl variable COMPREPLY.
+
+dnl OVS_BASHCOMP
+dnl
+dnl Attempt a specified completion.  There is a single argument, the
+dnl command line being completed, with the location at which completion
+dnl is to be attempted specified by a pipe symbol ('|').  The output will
+dnl be the list of completions.
+m4_define([BASHCOMP],
+  [AT_DATA([bashcomp_testfile],
+[#set -x
+COMP_LINE=$(printf -- '$1\n' | tr -d '|')
+prefix="${COMP_LINE%%|*}"
+COMP_POINT=${#prefix}
+COMP_KEY="\t"
+COMP_TYPE='$2'
+
+index=0
+for word in $(printf -- '$1\n' | sed -e 's/|/\|/g') ; do
+    if test "$word" != "${word%%|*}" ; then
+        dnl this is the word we should expand
+        COMP_CWORD=$index
+        COMP_WORDS=("${COMP_WORDS@<:@*@:>@}" $(printf -- "$word\n" | tr -d '|') )
+    else
+        COMP_WORDS=( "${COMP_WORDS@<:@@@:>@}" "$word" )
+    fi
+    index=$((index + 1))
+done
+
+export COMP_LINE COMP_POINT COMP_KEY COMP_TYPE COMP_WORDS COMP_CWORD
+
+#env | grep 'COMP_'
+#printf "COMP_WORDS=%s\n" "${COMP_WORDS@<:@@@:>@}"
+
+source "../../../ovs-vsctl-bashcomp.bash"
+if test $COMP_CWORD -eq 0 ; then
+   _ovs_vsctl_bashcomp ovs-vsctl ${COMP_WORDS@<:@$COMP_CWORD@:>@} ''
+else
+   _ovs_vsctl_bashcomp ovs-vsctl ${COMP_WORDS@<:@$COMP_CWORD@:>@} \
+         ${COMP_WORDS@<:@$((COMP_CWORDS - 1))@:>@}
+fi
+for comp in "${COMPREPLY@<:@@@:>@}"; do
+    printf -- "%s\n" "$comp"
+done
+])
+  printf "source bashcomp_testfile\n" | bash])

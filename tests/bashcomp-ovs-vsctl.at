@@ -1,0 +1,17 @@
+# This file tests ovs-vsctl bash completion
+
+AT_BANNER([ovs-vsctl bash completion tests])
+
+AT_SETUP([add- completions])
+AT_CHECK([BASHCOMP([ovs-vsctl add-|],[TAB])],
+  [0], [add-br
+add-port
+add-bond
+], [ignore])
+AT_CLEANUP
+
+AT_SETUP([add-br completion with space])
+AT_CHECK([BASHCOMP([ovs-vsctl add-br|],[TAB])],
+  [0], [add-br
+], [ignore])
+AT_CLEANUP
