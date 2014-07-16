@@ -513,6 +513,18 @@ _ovs_vsctl_process_messages () {
 # it has determined that the next argument will be.
 _ovs_vsctl_bashcomp () {
     local cur valid_globals cmd_args raw_cmd cmd_pos valid_globals valid_opts
+    local test="false"
+
+    if [ "$1" == "test" ]; then
+        test="true"
+        export COMP_LINE="$2"
+        tmp="ovs-vsctl"$'\n'"$(tr ' ' '\n' <<< "${COMP_LINE}x")"
+        tmp="${tmp%x}"
+        readarray -t COMP_WORDS \
+                  <<< "$tmp"
+        export COMP_WORDS
+        export COMP_CWORD="$((${#COMP_WORDS[@]}-1))"
+    fi
 
     _OVS_VSCTL_PARSED_ARGS=()
     cmd_pos=-1
@@ -592,12 +604,26 @@ _ovs_vsctl_bashcomp () {
             valid_commands=true
             given_opts=""
         fi
-        if [ "${_OVS_VSCTL_COMP_NOSPACE}" = "true" ]; then
-            compopt -o nospace
-            COMPREPLY=( $(compgen -W "${completion}" -- $word) )
-        else
-            compopt +o nospace
-            COMPREPLY=( $(compgen -W "${completion}" -- $word) )
+        if [ $index -eq $COMP_CWORD ]; then
+            if [ "$test" = "true" ]; then
+                if [ "${_OVS_VSCTL_COMP_NOSPACE}" = "true" ]; then
+                    for comp in $completion; do
+                        printf "%s\n" "$comp"
+                    done
+                else
+                    for comp in $completion; do
+                        printf "%s \n" "$comp"
+                    done
+                fi
+            else
+                if [ "${_OVS_VSCTL_COMP_NOSPACE}" = "true" ]; then
+                    compopt -o nospace
+                    COMPREPLY=( $(compgen -W "${completion}" -- $word) )
+                else
+                    compopt +o nospace
+                    COMPREPLY=( $(compgen -W "${completion}" -- $word) )
+                fi
+            fi
         fi
         #COMPREPLY=( $(compgen -W "${completion}" -- $word) )
         index=$(($index+1))
