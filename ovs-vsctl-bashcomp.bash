@@ -27,12 +27,20 @@ IFS=$SAVE_IFS
 
 declare -A _OVS_VSCTL_PARSED_ARGS
 
+# This is a convenience function to make sure that user input is
+# looked at as a fixed string when being compared to something.  $1 is
+# the input; this behaves like 'grep "^$1"' but deals with regex
+# metacharacters in $1.
+_ovs_vsctl_check_startswith_string () {
+    awk 'index($0, thearg)==1' thearg="$1"
+}
+
 _ovs_vsctl_bashcomp_globalopt () {
     local options result
 
     options=""
     result=$(printf "%s\n" "${_OVS_VSCTL_OPTIONS}" \
-             | grep -o -- "^${1%=*}[^=]*=\?")
+             | _ovs_vsctl_check_startswith_string "${1%=*}")
     if [[ $result =~ "=" ]]; then
         options="NOSPACE"
     fi
@@ -56,8 +64,8 @@ _ovs_vsctl_bashcomp_localopt () {
     for prefix_arg in $1; do
         result=$(printf "%s\n" "${result}" | grep -v -- "\[$prefix_arg\]")
     done
-    result=$(printf "%s\n" "${result}" \
-             | sed -ne 's/\[\('"$2"'[^]]*\)\]/\1/p')
+    result=$(printf "%s\n" "${result}" | sed -ne 's/\[\(.*\)\]/\1/p' \
+             | _ovs_vsctl_check_startswith_string "$2")
     if [[ $result =~ "=" ]]; then
         options="NOSPACE"
     fi
@@ -74,7 +82,7 @@ _ovs_vsctl_bashcomp_command () {
     done
     result=$(printf "%s\n" "${possible_cmds}" \
              | cut -f2 -d',' \
-             | grep -o -- "^$2.*")
+             | _ovs_vsctl_check_startswith_string "$2")
     printf -- "${result}"
 }
 
@@ -101,7 +109,8 @@ _ovs_vsctl_expand_command () {
 _ovs_vsctl_complete_table () {
     local result
 
-    result=$(ovsdb-client --no-heading list-tables | grep -- "^$1")
+    result=$(ovsdb-client --no-heading list-tables \
+             | _ovs_vsctl_check_startswith_string "$1")
     printf -- "EO\n%s\n" "${result}"
 }
 
@@ -110,21 +119,21 @@ _ovs_vsctl_complete_record () {
 
     table="${_OVS_VSCTL_PARSED_ARGS[TABLE]}"
     # Tables should always have an _uuid column
-    uuids=$(ovs-vsctl --no-heading -f table --columns=_uuid list $table \
-            | grep -- "$1")
+    uuids=$(ovs-vsctl --no-heading -f table -d bare --columns=_uuid \
+                      list $table | _ovs_vsctl_check_startswith_string "$1")
     # Names don't always exist, silently ignore if the name column is
     # unavailable.
-    names=$(ovs-vsctl --no-heading -f table \
+    names=$(ovs-vsctl --no-heading -f table -d bare \
                       --columns=name list $table \
                       2>/dev/null \
-            | grep -- "$1")
+            | _ovs_vsctl_check_startswith_string "$1")
     printf -- "EO\n%s\n%s\n" "${uuids}" "${names}"
 }
 
 _ovs_vsctl_complete_bridge () {
     local result
 
-    result=$(ovs-vsctl list-br | grep -- "^$1")
+    result=$(ovs-vsctl list-br | _ovs_vsctl_check_startswith_string "$1")
     printf -- "EO\n%s\n" "${result}"
 }
 
@@ -141,7 +150,7 @@ _ovs_vsctl_complete_port () {
                               list Port)
         ports=$(printf "$all_ports" | sort | tr -d '" ' | uniq -u)
     fi
-    result=$(grep -- "^$1" <<< "$ports")
+    result=$(_ovs_vsctl_check_startswith_string "$1" <<< "$ports")
     printf -- "EO\n%s\n" "${result}"
 }
 
@@ -155,7 +164,7 @@ _ovs_vsctl_complete_key_given_table_column () {
     keys=$(ovs-vsctl --no-heading --columns="$3" list \
                      "$2" \
            | tr -d '{\"}' | tr -s ', ' '\n' | cut -d'=' -f1 \
-           | xargs printf "$4%s\n" | grep -- "$1" )
+           | xargs printf "$4%s\n" | _ovs_vsctl_check_startswith_string "$1")
     result="${keys}"
     printf -- "%s\n" "${result}"
 }
@@ -177,7 +186,7 @@ _ovs_vsctl_complete_key () {
     else
         result=$(ovs-vsctl br-get-external-id \
                            ${_OVS_VSCTL_PARSED_ARGS["BRIDGE"]} \
-                 | cut -d'=' -f1 | grep -- "^$1")
+                 | cut -d'=' -f1 | _ovs_vsctl_check_startswith_string "$1")
     fi
     printf -- "EO\n%s\n" "${result}"
 }
@@ -198,7 +207,7 @@ _ovs_vsctl_complete_column () {
                            ${_OVS_VSCTL_PARSED_ARGS["TABLE"]})
     result=$(printf "%s\n" "${columns}" \
              | cut -d' ' -f1 \
-             | grep -- "$1" | sort | uniq)
+             | _ovs_vsctl_check_startswith_string "$1" | sort | uniq)
     printf -- "EO\n%s\n" "${result}"
 }
 
@@ -219,7 +228,7 @@ _ovs_vsctl_get_sys_intf () {
 _ovs_vsctl_complete_sysiface () {
     local result
 
-    result=$(_ovs_vsctl_get_sys_intf | grep -- "^$1")
+    result=$(_ovs_vsctl_get_sys_intf | _ovs_vsctl_check_startswith_string "$2")
     printf -- "EO\n%s\n" "${result}"
 }
 
@@ -260,7 +269,7 @@ _ovs_vsctl_complete_column_optkey_value () {
         result=$(printf "%s\n" "${columns}" \
                  | awk '/key.*value/ { print $1":"; next }
                                      { print $1; next }' \
-                 | grep -- "$1" | sort | uniq)
+                 | _ovs_vsctl_check_startswith_string "$1" | sort | uniq)
     fi
     if [[ $1 =~ ":" ]]; then
         result=$(_ovs_vsctl_complete_key_given_table_column \
