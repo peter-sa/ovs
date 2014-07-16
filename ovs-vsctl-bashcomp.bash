@@ -38,14 +38,13 @@ _ovs_vsctl_check_startswith_string () {
 
 _ovs_vsctl_bashcomp_globalopt () {
     local options result
-
     options=""
     result=$(printf "%s\n" "${_OVS_VSCTL_OPTIONS}" \
              | _ovs_vsctl_check_startswith_string "${1%=*}")
     if [[ $result =~ "=" ]]; then
         options="NOSPACE"
     fi
-    printf -- "${options}EO${result}"
+    printf -- "${options}\nEO\n${result}"
 }
 
 _ovs_vsctl_bashcomp_localopt () {
@@ -71,7 +70,7 @@ _ovs_vsctl_bashcomp_localopt () {
     if [[ $result =~ "=" ]]; then
         options="NOSPACE"
     fi
-    printf -- "${options}EO${result}"
+    printf -- "${options}\nEO\n${result}"
 }
 
 _ovs_vsctl_bashcomp_command () {
@@ -242,7 +241,7 @@ _ovs_vsctl_complete_iface () {
         ifaces=$(ovs-vsctl list-ifaces "${bridge}")
         result="${result} ${ifaces}"
     done
-    printf "EO%s\n" "${result}"
+    printf "EO\n%s\n" "${result}"
 }
 
 _ovs_vsctl_complete_column_optkey_value () {
