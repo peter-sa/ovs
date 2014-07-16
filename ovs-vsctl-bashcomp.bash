@@ -22,7 +22,8 @@ IFS="
 _OVS_VSCTL_COMMANDS="$(ovs-vsctl --commands)"
 
 # FIXME: Do not require this AWK command!
-_OVS_VSCTL_OPTIONS="$(ovs-vsctl --options | awk '/^--/ { print $0 }')"
+_OVS_VSCTL_OPTIONS="$(ovs-vsctl --options | awk '/^--/ { print $0 }' \
+                      | sed -e 's/\(.*\)=ARG/\1=/')"
 IFS=$SAVE_IFS
 
 declare -A _OVS_VSCTL_PARSED_ARGS
@@ -55,14 +56,15 @@ _ovs_vsctl_bashcomp_localopt () {
     # already-seen ones
     for prefix_arg in $1; do
         possible_opts=$(printf "%s\n" "$possible_opts" \
-                        | grep -- "\[$prefix_arg\]")
+                        | grep -- "\[${prefix_arg%%=*}=\?\]")
     done
     result=$(printf "%s\n" "${possible_opts}" \
              | tr ' ' '\n' | tr -s '\n' | sort | uniq)
     # This removes the already-seen options from the list so that
     # users aren't completed for the same option twice.
     for prefix_arg in $1; do
-        result=$(printf "%s\n" "${result}" | grep -v -- "\[$prefix_arg\]")
+        result=$(printf "%s\n" "${result}" \
+                 | grep -v -- "\[${prefix_arg%%=*}=\?\]")
     done
     result=$(printf "%s\n" "${result}" | sed -ne 's/\[\(.*\)\]/\1/p' \
              | _ovs_vsctl_check_startswith_string "$2")
