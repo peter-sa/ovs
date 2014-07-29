@@ -515,7 +515,7 @@ _ovs_vsctl_bashcomp () {
     local cur valid_globals cmd_args raw_cmd cmd_pos valid_globals valid_opts
     local test="false"
 
-    if [ "$1" == "test" ]; then
+    if [ "$1" = "test" ]; then
         test="true"
         export COMP_LINE="$2"
         tmp="ovs-vsctl"$'\n'"$(tr ' ' '\n' <<< "${COMP_LINE}x")"
@@ -630,4 +630,8 @@ _ovs_vsctl_bashcomp () {
     done
 }
 
-complete -F _ovs_vsctl_bashcomp ovs-vsctl
+if [ "$1" = "test" ]; then
+    _ovs_vsctl_bashcomp "$@"
+else
+    complete -F _ovs_vsctl_bashcomp ovs-vsctl
+fi
