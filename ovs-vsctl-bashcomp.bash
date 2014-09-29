@@ -317,23 +317,31 @@ _ovs_vsctl_complete_target () {
 }
 
 _ovs_vsctl_get_PS1 () {
-    local res
-
-#    res=">"
 
     # Original inspiration from
     # http://stackoverflow.com/questions/10060500/bash-how-to-evaluate-ps1-ps2,
-    # but changed quite a lot to allow making sure that PS1s only set
-    # for the current session work
-    res="$(bash -i 2>&1 <<< $'PS1=\"'"$PS1"$'\" \n' | head -n 4 | tail -n 1)"
-    printf "${res}"
+    # but changed quite a lot to make it more robust.
+
+    # Make sure the PS1 used doesn't include any of the special
+    # strings used to identify the prompt
+    myPS1="$(sed 's/Begin prompt/\\Begin prompt/; s/End prompt/\\End prompt/' <<< "$PS1")"
+    # Export the current environment in case the prompt uses any
+    vars="$(env | cut -d'=' -f1)"
+    for var in $vars; do export $var; done
+    funcs="$(declare -F | cut -d' ' -f3)"
+    for func in $funcs; do export -f $func; done
+    # Get the prompt
+    v="$(bash --norc --noprofile -i 2>&1 <<< $'PS1=\"'"$myPS1"$'\" \n# Begin prompt\n# End prompt')"
+    v="${v##*# Begin prompt}"
+    printf -- "$(tail -n +2 <<< "${v%# End prompt*}" | sed 's/\\Begin prompt/Begin prompt/; s/\\End prompt/End prompt/')"
+
 }
 
 _ovs_vsctl_complete_new () {
     local two_word_type message result
 
     two_word_type="${2/-/ }"
-    message="\nEnter a ${two_word_type,,}:\n$(_ovs_vsctl_get_PS1) $COMP_LINE"
+    message="\nEnter a ${two_word_type,,}:\n$(_ovs_vsctl_get_PS1)$COMP_LINE"
     if [ -n "$1" ]; then
         result="$1"
     else
