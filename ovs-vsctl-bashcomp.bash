@@ -1,6 +1,14 @@
 SAVE_IFS=$IFS
 IFS="
 "
+_OVS_VSCTL_INVOCATION_OPTS=""
+
+# Run ovs-vsctl with any needed invocation options useful for making
+# sure that ovs-vsctl is always called with the correct --db argument.
+_ovs_vsctl () {
+    ovs-vsctl ${_OVS_VSCTL_INVOCATION_OPTS} "$@"
+}
+
 # ovs-vsctl --commands outputs in this format:
 #
 # main = <localopts>,<name>,<options>
@@ -19,10 +27,10 @@ IFS="
 # A bar (|) character in an argument means thing before bar OR thing
 # after bar; for example, del-port can take a port or an interface.
 
-_OVS_VSCTL_COMMANDS="$(ovs-vsctl --commands)"
+_OVS_VSCTL_COMMANDS="$(_ovs_vsctl --commands)"
 
-# FIXME: Do not require this AWK command!
-_OVS_VSCTL_OPTIONS="$(ovs-vsctl --options | awk '/^--/ { print $0 }' \
+# This doesn't complete on short arguments, so it filters them out.
+_OVS_VSCTL_OPTIONS="$(_ovs_vsctl --options | awk '/^--/ { print $0 }' \
                       | sed -e 's/\(.*\)=ARG/\1=/')"
 IFS=$SAVE_IFS
 
@@ -120,11 +128,11 @@ _ovs_vsctl_complete_record () {
 
     table="${_OVS_VSCTL_PARSED_ARGS[TABLE]}"
     # Tables should always have an _uuid column
-    uuids=$(ovs-vsctl --no-heading -f table -d bare --columns=_uuid \
+    uuids=$(_ovs_vsctl --no-heading -f table -d bare --columns=_uuid \
                       list $table | _ovs_vsctl_check_startswith_string "$1")
     # Names don't always exist, silently ignore if the name column is
     # unavailable.
-    names=$(ovs-vsctl --no-heading -f table -d bare \
+    names=$(_ovs_vsctl --no-heading -f table -d bare \
                       --columns=name list $table \
                       2>/dev/null \
             | _ovs_vsctl_check_startswith_string "$1")
@@ -134,7 +142,7 @@ _ovs_vsctl_complete_record () {
 _ovs_vsctl_complete_bridge () {
     local result
 
-    result=$(ovs-vsctl list-br | _ovs_vsctl_check_startswith_string "$1")
+    result=$(_ovs_vsctl list-br | _ovs_vsctl_check_startswith_string "$1")
     printf -- "EO\n%s\n" "${result}"
 }
 
@@ -142,10 +150,10 @@ _ovs_vsctl_complete_port () {
     local ports result
 
     if [ -n "${_OVS_VSCTL_PARSED_ARGS[BRIDGE]}" ]; then
-        ports=$(ovs-vsctl list-ports "${_OVS_VSCTL_PARSED_ARGS[BRIDGE]}")
+        ports=$(_ovs_vsctl list-ports "${_OVS_VSCTL_PARSED_ARGS[BRIDGE]}")
     else
         local all_ports
-        all_ports=$(ovs-vsctl --format=table \
+        all_ports=$(_ovs_vsctl --format=table \
                               --no-headings \
                               --columns=name \
                               list Port)
@@ -162,7 +170,7 @@ _ovs_vsctl_complete_port () {
 _ovs_vsctl_complete_key_given_table_column () {
     local keys
 
-    keys=$(ovs-vsctl --no-heading --columns="$3" list \
+    keys=$(_ovs_vsctl --no-heading --columns="$3" list \
                      "$2" \
            | tr -d '{\"}' | tr -s ', ' '\n' | cut -d'=' -f1 \
            | xargs printf "$4%s\n" | _ovs_vsctl_check_startswith_string "$1")
@@ -185,7 +193,7 @@ _ovs_vsctl_complete_key () {
                      $column \
                      "")
     else
-        result=$(ovs-vsctl br-get-external-id \
+        result=$(_ovs_vsctl br-get-external-id \
                            ${_OVS_VSCTL_PARSED_ARGS["BRIDGE"]} \
                  | cut -d'=' -f1 | _ovs_vsctl_check_startswith_string "$1")
     fi
@@ -235,10 +243,10 @@ _ovs_vsctl_complete_sysiface () {
 
 _ovs_vsctl_complete_iface () {
     local bridges result
-    bridges=$(ovs-vsctl list-br)
+    bridges=$(_ovs_vsctl list-br)
     for bridge in $bridges; do
         local ifaces
-        ifaces=$(ovs-vsctl list-ifaces "${bridge}")
+        ifaces=$(_ovs_vsctl list-ifaces "${bridge}")
         result="${result} ${ifaces}"
     done
     printf "EO\n%s\n" "${result}"
@@ -524,6 +532,17 @@ _ovs_vsctl_bashcomp () {
                   <<< "$tmp"
         export COMP_WORDS
         export COMP_CWORD="$((${#COMP_WORDS[@]}-1))"
+
+    db=$(sed -n 's/.*--db=\([^ ]*\).*/\1/p' <<< "$COMP_LINE")
+    if [ -n "$db" ]; then
+        _OVS_VSCTL_INVOCATION_OPTS="--db=$db"
+    fi
+
+    if ! _ovs_vsctl get-manager 2>/dev/null; then
+        _OVS_VSCTL_INVOCATION_OPTS=""
+        if ! _ovs_vsctl get-manager 2>/dev/null; then
+            return 1;
+        fi
     fi
 
     _OVS_VSCTL_PARSED_ARGS=()
