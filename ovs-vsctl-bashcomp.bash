@@ -502,7 +502,13 @@ _ovs_vsctl_process_messages () {
 
     message="${1#*BM}"
     message="${message%%EM*}"
+    if [ "$test" = "true" ]; then
+        printf -- "--- BEGIN MESSAGE"
+    fi
     printf "${message}"
+    if [ "$test" = "true" ]; then
+        printf -- "--- END MESSAGE"
+    fi
 }
 
 # The general strategy here is that the same functions that decide
@@ -530,16 +536,22 @@ _ovs_vsctl_process_messages () {
 _ovs_vsctl_bashcomp () {
     local cur valid_globals cmd_args raw_cmd cmd_pos valid_globals valid_opts
     local test="false"
-
     if [ "$1" = "test" ]; then
         test="true"
-        export COMP_LINE="$2"
+        export COMP_LINE="ovs-vsctl $2"
         tmp="ovs-vsctl"$'\n'"$(tr ' ' '\n' <<< "${COMP_LINE}x")"
         tmp="${tmp%x}"
         readarray -t COMP_WORDS \
                   <<< "$tmp"
         export COMP_WORDS
         export COMP_CWORD="$((${#COMP_WORDS[@]}-1))"
+        export PS1="> "
+        # This is used to make the PS1-extraction code not emit extra
+        # escape sequences; it seems like bash assumes that unknown
+        # terminal names are dumb which means this should work even in
+        # the unlikely occurence of the terminal "dumb" not existing.
+        export TERM="dumb"
+    fi
 
     db=$(sed -n 's/.*--db=\([^ ]*\).*/\1/p' <<< "$COMP_LINE")
     if [ -n "$db" ]; then
@@ -631,6 +643,7 @@ _ovs_vsctl_bashcomp () {
             valid_commands=true
             given_opts=""
         fi
+        completion="$(sort <<< "$(tr ' ' '\n' <<< ${completion})")"
         if [ $index -eq $COMP_CWORD ]; then
             if [ "$test" = "true" ]; then
                 if [ "${_OVS_VSCTL_COMP_NOSPACE}" = "true" ]; then
