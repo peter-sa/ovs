@@ -2,16 +2,166 @@
 
 AT_BANNER([ovs-vsctl bash completion tests])
 
-AT_SETUP([add- completions])
-AT_CHECK([BASHCOMP([ovs-vsctl add-|],[TAB])],
-  [0], [add-br
-add-port
-add-bond
-], [ignore])
-AT_CLEANUP
+m4_define([OVS_VSCTL_BASHCOMP_SETUP],
+  [OVS_VSCTL_SETUP
+   RUN_OVS_VSCTL(
+     [add-br br1],
+     [add-br br2],
+     [add-br some-long-name],
+     [add-br foo],
+     [add-port br1 br1p0],
+     [add-port br1 br1p1],
+     [add-port br2 br2p0],
+     [add-port br2 br2p1],
+     [add-port br2 br2p2],
+     [add-port some-long-name a-long-named-port],
+     [add-port foo bar]
+)])
 
-AT_SETUP([add-br completion with space])
-AT_CHECK([BASHCOMP([ovs-vsctl add-br|],[TAB])],
-  [0], [add-br
-], [ignore])
-AT_CLEANUP
+m4_define([OVS_VSCTL_BASHCOMP_CHECK],
+  [AT_SETUP([$1])
+   OVS_VSCTL_BASHCOMP_SETUP
+   AT_CHECK(BASHCOMP([--db=unix:socket $2]),
+     [0], [$3], [ignore])
+   OVS_VSCTL_CLEANUP
+   AT_CLEANUP
+])
+
+# MEMO: Fix the docs:
+# --bootstrap-ca-cert is in manpage but not code
+# --options, --commands are in code but not manpage
+OVS_VSCTL_BASHCOMP_CHECK([ovs-vsctl-complete-empty],
+[],
+[--all
+--bare
+--bootstrap
+--ca-cert=
+--certificate=
+--columns=
+--commands
+--data=
+--db=
+--dry-run
+--fake
+--fake-iface
+--format=
+--help
+--id=
+--if-exists
+--log-file=
+--may-exist
+--no-headings
+--no-syslog
+--no-wait
+--oneline
+--options
+--peer-ca-cert=
+--pretty
+--private-key=
+--real
+--retry
+--syslog-target=
+--timeout=
+--verbose=
+--version
+--with-iface
+add
+add-bond
+add-br
+add-port
+br-exists
+br-get-external-id
+br-set-external-id
+br-to-parent
+br-to-vlan
+clear
+comment
+create
+del-br
+del-controller
+del-fail-mode
+del-manager
+del-port
+del-ssl
+destroy
+emer-reset
+find
+get
+get-controller
+get-fail-mode
+get-manager
+get-ssl
+iface-to-br
+init
+list
+list-br
+list-ifaces
+list-ports
+port-to-br
+remove
+set
+set-controller
+set-fail-mode
+set-manager
+set-ssl
+show
+wait-until
+])
+
+dnl AT_SETUP([add- completions])
+dnl OVS_VSCTL_BASCHOMP_SETUP
+dnl AT_CHECK([BASHCOMP([ovs-vsctl add-])],
+dnl   [0], [add-br @&t@
+dnl add-port @&t@
+dnl add-bond @&t@
+dnl ], [ignore], [OVS_VSCTL_CLEANUP])
+dnl AT_CLEANUP
+
+OVS_VSCTL_BASHCOMP_CHECK([nospace global options],
+[ovs-vsctl --t],
+[--timeout=
+])
+
+OVS_VSCTL_BASHCOMP_CHECK([space global options],
+[ovs-vsctl --no-],
+[--no-headings @&t@
+--no-syslog @&t@
+--no-wait @&t@
+])
+
+OVS_VSCTL_BASHCOMP_CHECK([narrow by local options],
+[ovs-vsctl --may-exist ],
+[--fake-iface @&t@
+add-bond @&t@
+add-br @&t@
+add-port @&t@
+])
+
+OVS_VSCTL_BASHCOMP_CHECK([bridge completions],
+[ovs-vsctl add-port ],
+[br1 @&t@
+br2 @&t@
+foo @&t@
+some-long-name @&t@
+])
+
+
+OVS_VSCTL_BASHCOMP_CHECK([add- completions],
+[ovs-vsctl add-],
+[add-bond @&t@
+add-br @&t@
+add-port @&t@
+])
+
+# AT_SETUP([add-br completion with space])
+# AT_CHECK([BASHCOMP([ovs-vsctl add-br ])],
+#   [0], [--- BEGIN MESSAGE
+# Enter a new bridge:
+# > ovs-vsctl add-br --- END MESSAGE], [ignore])
+# AT_CLEANUP
+
+OVS_VSCTL_BASHCOMP_CHECK([add-br completion with space --- NEW completion],
+[add-br ],
+[--- BEGIN MESSAGE
+Enter a new bridge:
+> ovs-vsctl --db=unix:socket add-br --- END MESSAGE])

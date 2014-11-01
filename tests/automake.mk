@@ -67,7 +67,9 @@ TESTSUITE_AT = \
 	tests/stp.at \
 	tests/interface-reconfigure.at \
 	tests/vlog.at \
-	tests/vtep-ctl.at
+	tests/vtep-ctl.at \
+	tests/bashcomp.at \
+	tests/bashcomp-ovs-vsctl.at
 TESTSUITE = $(srcdir)/tests/testsuite
 DISTCLEANFILES += tests/atconfig tests/atlocal
 
