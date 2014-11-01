@@ -359,7 +359,7 @@ _ovs_vsctl_complete_dashdash () {
 #
 # $1 is the word being completed
 #
-# $2 is the type of completion --- only currently usefull for the
+# $2 is the type of completion --- only currently useful for the
 # NEW-* functions.
 #
 # There are a few argument types that are not completed:
@@ -517,7 +517,7 @@ _ovs_vsctl_process_messages () {
 # processing for words that are not the current word and words that
 # are the current word.
 #
-# Parsing up until the command word happens start with everything
+# Parsing up until the command word happens starts with everything
 # valid; as the syntax order of ovs-vsctl is fairly strict, when types
 # of words that preclude other words from happending can turn them
 # off; this is controlled by valid_globals, valid_opts, and
